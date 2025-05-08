@@ -8,4 +8,6 @@ It also remembers the default state of the block in memory, so if you decide to 
 Using the command /blockoverride_reload you can reload the config ingame and changes takes place immediately.
 ***
 
+Mod download can be found on CurseForge [here](https://www.curseforge.com/minecraft/mc-mods/blockoverride).
+
 > Created and coded by Kratdavaham
