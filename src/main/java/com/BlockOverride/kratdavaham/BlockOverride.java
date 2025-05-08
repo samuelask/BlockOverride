@@ -15,6 +15,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -111,7 +112,9 @@ public class BlockOverride
 	    
 	    if (!configVersion.equals(currentVersion)) {
 	        logger.warn("Config version mismatch! Found: " + configVersion + ", expected: " + currentVersion);
-	        config.get("general", "configVersion", currentVersion).set(currentVersion);
+	        Property versionProp = config.get("general", "configVersion", currentVersion);
+	        versionProp.set(currentVersion);
+	        versionProp.setComment("DO NOT EDIT. Used to track config version.");
 	    }
 	    
 	    String[] entries = config.get("settings", "blockSettings", new String[0],
