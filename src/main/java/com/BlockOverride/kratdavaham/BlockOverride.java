@@ -1,12 +1,15 @@
 package com.BlockOverride.kratdavaham;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.Logger;
 
-import com.BlockOverride.kratdavaham.command.CommandReloadOverride;
+import com.BlockOverride.kratdavaham.command.CommandBlockOverride;
 import com.BlockOverride.kratdavaham.proxy.CommonProxy;
 import com.BlockOverride.kratdavaham.util.reference;
 
@@ -37,9 +40,9 @@ public class BlockOverride
 	@SidedProxy(clientSide = reference.CLIENT_PROXY_CLASS, serverSide = reference.COMMON_PROXY_CLASS)
 	public static CommonProxy proxy;
 	
-	private Map<String, float[]> blockOverrides = new HashMap<>();
+	public Map<String, float[]> blockOverrides = new HashMap<>();
 	
-	private final Map<Block, float[]> originalValues = new HashMap<>();
+	public final Map<Block, float[]> originalValues = new HashMap<>();
 	
 	@EventHandler
 	public void preInit(FMLPreInitializationEvent event)
@@ -63,7 +66,7 @@ public class BlockOverride
 	    }
 	}
 	
-	private void modifyBlock(String id, float hardnessOverride, float resistanceOverride) {
+	public void modifyBlock(String id, float hardnessOverride, float resistanceOverride) {
 	    Block block = Block.REGISTRY.getObject(new ResourceLocation(id));
 	    if (block != null) {
 	        // Save original values only once
@@ -80,6 +83,41 @@ public class BlockOverride
 	    } else {
 	        logger.warn("Block not found: " + id);
 	    }
+	}
+	
+	public void removeBlockFromConfig(String blockId) {
+	    File configFile = new File(configDir, "blockoverride.cfg");
+	    Configuration config = new Configuration(configFile);
+	    config.load();
+
+	    Property prop = config.get("settings", "blockSettings", new String[0]);
+	    List<String> entries = new ArrayList<>(Arrays.asList(prop.getStringList()));
+
+	    entries.removeIf(line -> line.startsWith(blockId + "="));
+
+	    prop.set(entries.toArray(new String[0]));
+	    config.save();
+	}
+	
+	public void addOrUpdateBlockInConfig(String blockId, float hardness, float resistance) {
+	    File configFile = new File(configDir, "blockoverride.cfg");
+	    Configuration config = new Configuration(configFile);
+	    config.load();
+
+	    Property prop = config.get("settings", "blockSettings", new String[0]);
+	    List<String> entries = new ArrayList<>(Arrays.asList(prop.getStringList()));
+
+	    // Remove existing entry for block
+	    entries.removeIf(line -> line.startsWith(blockId + "="));
+
+	    // Add new entry
+	    entries.add(blockId + "=" + hardness + "," + resistance);
+
+	    prop.set(entries.toArray(new String[0]));
+
+	    config.save();
+
+	    blockOverrides.put(blockId, new float[]{hardness, resistance});
 	}
 	
 	public void reloadConfig() {
@@ -167,6 +205,6 @@ public class BlockOverride
 	@EventHandler
 	public void serverInit(FMLServerStartingEvent event)
 	{
-		event.registerServerCommand(new CommandReloadOverride());
+		event.registerServerCommand(new CommandBlockOverride());
 	}
 }
