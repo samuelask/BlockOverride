@@ -86,15 +86,41 @@ public class BlockOverride
 	    Configuration config = new Configuration(configFile);
 	    config.load();
 
+	    if (config.hasCategory("blocks")) {
+	        logger.info("Migrating config category 'blocks' → 'settings'...");
+
+	        String[] oldBlockSettings = config.get("blocks", "blockSettings", new String[0]).getStringList();
+
+	        config.get("settings", "blockSettings", oldBlockSettings,
+	            "List of blocks to override.\n" +
+	            "Format: modid:blockname=hardness,resistance\n" +
+	            "Example: minecraft:obsidian=5.0,1200.0\n" +
+	            "Note: Bedrock has a hardness of -1.0 by default, and resistance of 3600000.0\n" +
+	            "Setting hardness to -1.0 may make blocks unbreakable (like bedrock)."
+	        ).set(oldBlockSettings);
+
+	        config.removeCategory(config.getCategory("blocks"));
+	        logger.info("Migration complete. Removed legacy category 'blocks'.");
+	    }
+	    
 	    blockOverrides.clear(); // Clear old entries
 
-	    String[] entries = config.get("blocks", "blockSettings", new String[0],
-	        "List of blocks to override.\n" +
-	        "Format: modid:blockname=hardness,resistance\n" +
-	        "Example: minecraft:obsidian=5.0,1200.0\n" +
-	        "Note: Bedrock has a hardness of -1.0 by default, and resistance of 3600000.0\n" +
-	        "Setting hardness to -1.0 may make blocks unbreakable (like bedrock)."
-	    ).getStringList();
+	    String currentVersion = reference.VERSION;
+	    String configVersion = config.get("general", "configVersion", "1.0.0",
+	    	    "DO NOT EDIT. Used to track config version.").getString();
+	    
+	    if (!configVersion.equals(currentVersion)) {
+	        logger.warn("Config version mismatch! Found: " + configVersion + ", expected: " + currentVersion);
+	        config.get("general", "configVersion", currentVersion).set(currentVersion);
+	    }
+	    
+	    String[] entries = config.get("settings", "blockSettings", new String[0],
+	    	    "List of blocks to override.\n" +
+	    	    "Format: modid:blockname=hardness,resistance\n" +
+	    	    "Example: minecraft:obsidian=5.0,1200.0\n" +
+	    	    "Note: Bedrock has a hardness of -1.0 by default, and resistance of 3600000.0\n" +
+	    	    "Setting hardness to -1.0 may make blocks unbreakable (like bedrock)."
+	    	).getStringList();
 
 	    for (String entry : entries) {
 	        try {
