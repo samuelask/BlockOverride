@@ -3,10 +3,10 @@ package com.BlockOverride.kratdavaham;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Collections;
 import java.util.Set;
 
 import org.apache.logging.log4j.Logger;
@@ -24,6 +24,8 @@ import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
+import net.minecraftforge.fml.common.Mod.Metadata;
+import net.minecraftforge.fml.common.ModMetadata;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
@@ -38,6 +40,9 @@ public class BlockOverride
 	
 	@Instance
 	public static BlockOverride instance;
+	
+	@Metadata(reference.MOD_ID)
+    public static ModMetadata metadata;
 	
 	@SidedProxy(clientSide = reference.CLIENT_PROXY_CLASS, serverSide = reference.COMMON_PROXY_CLASS)
 	public static CommonProxy proxy;
@@ -79,6 +84,8 @@ public class BlockOverride
 	{
 		logger = event.getModLog();
 		configDir = event.getModConfigurationDirectory();
+		logger.info("Loaded mod: " + metadata.name + " v" + metadata.version);
+
 	    reloadConfig();
 	}
 

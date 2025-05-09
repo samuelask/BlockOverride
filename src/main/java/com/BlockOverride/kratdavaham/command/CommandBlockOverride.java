@@ -23,6 +23,8 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.event.ClickEvent;
+import net.minecraftforge.fml.common.ModMetadata;
 
 public class CommandBlockOverride extends CommandBase {
 	@Override
@@ -38,7 +40,7 @@ public class CommandBlockOverride extends CommandBase {
 	@Override
 	public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
 	    if (args.length == 1) {
-	        return getListOfStringsMatchingLastWord(args, Arrays.asList("reload", "help", "add", "remove", "get", "list"));
+	        return getListOfStringsMatchingLastWord(args, Arrays.asList("reload", "help", "add", "remove", "get", "list", "info"));
 	    }
 
 	    if (args.length == 2 && args[0].equalsIgnoreCase("add")) {
@@ -57,6 +59,7 @@ public class CommandBlockOverride extends CommandBase {
 			sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "/blockoverride remove " + TextFormatting.GRAY + "- Removes the block in your hand from the config."));
 			sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "/blockoverride get " + TextFormatting.GRAY + "- Gets the Hardness and Resistance value from the block in your hand."));
 			sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "/blockoverride list " + TextFormatting.GRAY + "- Lists all blocks that are currently overridden."));
+			sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "/blockoverride info " + TextFormatting.GRAY + "- Lists mod version."));
 			sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "/blockoverride help " + TextFormatting.GRAY + "- Shows this help message."));
 	    } else if (args[0].equalsIgnoreCase("reload")) {
 	        BlockOverride.instance.reloadConfig();
@@ -183,6 +186,26 @@ public class CommandBlockOverride extends CommandBase {
 	                    TextFormatting.GRAY + "- " + TextFormatting.YELLOW + blockId + TextFormatting.GRAY + " -> hardness=" + values[0] + ", resistance=" + values[1]
 	                ));
 	            }
+	        }
+	    } else if (args[0].equalsIgnoreCase("info")) {
+	        ModMetadata meta = BlockOverride.metadata;
+
+	        sender.sendMessage(new TextComponentString(TextFormatting.GOLD + meta.name + TextFormatting.GRAY + " v" + meta.version));
+	        if (meta.description != null && !meta.description.trim().isEmpty()) {
+	            sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "Description: " + TextFormatting.WHITE + meta.description));
+	        }
+	        if (meta.authorList != null && !meta.authorList.isEmpty()) {
+	            String authors = String.join(", ", meta.authorList);
+	            sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "Authors: " + TextFormatting.WHITE + authors));
+	        }
+	        if (meta.url != null && !meta.url.trim().isEmpty()) {
+	        	TextComponentString website = new TextComponentString(TextFormatting.YELLOW + "Website: ");
+	        	TextComponentString link = new TextComponentString(TextFormatting.BLUE + meta.url);
+	        	link.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, meta.url));
+	        	link.getStyle().setUnderlined(true);
+	        	website.appendSibling(link);
+
+	        	sender.sendMessage(website);
 	        }
 	    } else {
 	        throw new WrongUsageException("/blockoverride help");
