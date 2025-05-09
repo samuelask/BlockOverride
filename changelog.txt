@@ -1,7 +1,15 @@
 Build: blockoverride-1.0.3
 	Kratdavaham: 
 	Fixed text in config
-
+	
+	Added more commands:
+	/blockoverride help "Shows all commands and what they do."
+	/blockoverride reload "Reloads the block override config. (Useful for more manual control, you dont need to reload the config after using addor remove)"
+	/blockoverride add "Adds the block in your hand to the config."
+	/blockoverride remove "Removes the block in your hand from the config."
+	/blockoverride get "Gets the Hardness and Resistance value from the block in your hand."
+	/blockoverride list "Lists all blocks that are currently overridden."
+	
 =========
 Build: blockoverride-1.0.2
 	Kratdavaham: 
@@ -13,11 +21,8 @@ Build: blockoverride-1.0.1
 	Kratdavaham: 
 	Fixed it so servers dont kick a player without the mod
 		
-
 =========
 Build: blockoverride-1.0.0
 	Kratdavaham: 
 	Release of mod
 		
-
-
