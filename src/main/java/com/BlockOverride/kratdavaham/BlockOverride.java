@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
+import java.util.Set;
 
 import org.apache.logging.log4j.Logger;
 
@@ -40,9 +42,37 @@ public class BlockOverride
 	@SidedProxy(clientSide = reference.CLIENT_PROXY_CLASS, serverSide = reference.COMMON_PROXY_CLASS)
 	public static CommonProxy proxy;
 	
-	public Map<String, float[]> blockOverrides = new HashMap<>();
+	private final Map<String, float[]> blockOverrides = new HashMap<>();
 	
-	public final Map<Block, float[]> originalValues = new HashMap<>();
+	public float[] getOverride(String blockId) {
+	    return blockOverrides.get(blockId);
+	}
+
+	public boolean isOverridden(String blockId) {
+	    return blockOverrides.containsKey(blockId);
+	}
+
+	public void setOverride(String blockId, float hardness, float resistance) {
+	    blockOverrides.put(blockId, new float[]{hardness, resistance});
+	}
+
+	public void removeOverride(String blockId) {
+	    blockOverrides.remove(blockId);
+	}
+
+	public Set<String> getAllOverriddenBlocks() {
+	    return Collections.unmodifiableSet(blockOverrides.keySet());
+	}
+	
+	private final Map<Block, float[]> originalValues = new HashMap<>();
+
+	public float[] getOriginalValues(Block block) {
+	    return originalValues.get(block);
+	}
+	
+	public Map<String, float[]> getAllBlockOverrides() {
+	    return Collections.unmodifiableMap(blockOverrides);
+	}
 	
 	@EventHandler
 	public void preInit(FMLPreInitializationEvent event)

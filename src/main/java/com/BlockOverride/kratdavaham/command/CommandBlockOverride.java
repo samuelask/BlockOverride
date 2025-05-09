@@ -3,12 +3,14 @@ package com.BlockOverride.kratdavaham.command;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
 import com.BlockOverride.kratdavaham.BlockOverride;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -35,7 +37,7 @@ public class CommandBlockOverride extends CommandBase {
 	@Override
 	public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
 	    if (args.length == 1) {
-	        return getListOfStringsMatchingLastWord(args, Arrays.asList("reload", "help", "add", "remove"));
+	        return getListOfStringsMatchingLastWord(args, Arrays.asList("reload", "help", "add", "remove", "get", "list"));
 	    }
 
 	    if (args.length == 2 && args[0].equalsIgnoreCase("add")) {
@@ -52,6 +54,8 @@ public class CommandBlockOverride extends CommandBase {
 	        sender.sendMessage(new TextComponentString("§e/blockoverride reload §7- Reloads the block override config."));
 	        sender.sendMessage(new TextComponentString("§e/blockoverride add §7- Adds the block in your hand to the config."));
 	        sender.sendMessage(new TextComponentString("§e/blockoverride remove §7- Removes the block in your hand from the config."));
+	        sender.sendMessage(new TextComponentString("§e/blockoverride get §7- Gets the Hardness and Resistance value from the block in your hand."));
+	        sender.sendMessage(new TextComponentString("§e/blockoverride list §7- Lists all blocks that are currently overridden."));
 	        sender.sendMessage(new TextComponentString("§e/blockoverride help §7- Shows this help message."));
 	    } else if (args[0].equalsIgnoreCase("reload")) {
 	        BlockOverride.instance.reloadConfig();
@@ -86,9 +90,9 @@ public class CommandBlockOverride extends CommandBase {
 	        if (id == null) throw new CommandException("Could not determine block ID.");
 	        String blockKey = id.toString();
 
-	        float[] existing = BlockOverride.instance.blockOverrides.getOrDefault(blockKey, new float[]{1.0f, 10.0f});
-	        float hardness = existing[0];
-	        float resistance = existing[1];
+	        float[] existing = BlockOverride.instance.getOverride(blockKey);
+	        float hardness = (existing != null) ? existing[0] : 1.0f;
+	        float resistance = (existing != null) ? existing[1] : 10.0f;
 
 	        if (type.equals("hardness")) {
 	            hardness = value;
@@ -103,22 +107,34 @@ public class CommandBlockOverride extends CommandBase {
 	        BlockOverride.instance.modifyBlock(blockKey, hardness, resistance);
 	        notifyCommandListener(sender, this, "§aUpdated block '" + blockKey + "' → hardness=" + hardness + ", resistance=" + resistance);
 	    } else if (args[0].equalsIgnoreCase("remove")) {
-	        if (args.length < 2) {
-	            throw new WrongUsageException("/blockoverride remove <modid:blockid>");
+	        if (!(sender instanceof EntityPlayer)) {
+	            throw new CommandException("This command must be run by a player.");
 	        }
 
-	        String blockId = args[1];
-	        Block block = Block.REGISTRY.getObject(new ResourceLocation(blockId));
-
-	        if (block == null) {
-	            throw new CommandException("Block '" + blockId + "' not found.");
+	        EntityPlayer player = (EntityPlayer) sender;
+	        ItemStack held = player.getHeldItemMainhand();
+	        if (held == null || !(held.getItem() instanceof ItemBlock)) {
+	            String heldName = (held != null) ? held.getDisplayName() : "nothing";
+	            throw new CommandException("Item '" + heldName + "' is not a placeable block.");
 	        }
 
-	        // Remove from map
-	        BlockOverride.instance.blockOverrides.remove(blockId);
+	        Block block = ((ItemBlock) held.getItem()).getBlock();
+	        ResourceLocation id = Block.REGISTRY.getNameForObject(block);
+	        if (id == null) {
+	            throw new CommandException("Could not determine block ID.");
+	        }
+
+	        String blockId = id.toString();
+	        
+	        if (!BlockOverride.instance.isOverridden(blockId)) {
+	            throw new CommandException("Block '" + blockId + "' is not currently overridden.");
+	        }
+
+	        // Remove from override map
+	        BlockOverride.instance.removeOverride(blockId);
 
 	        // Reset to original values if stored
-	        float[] defaults = BlockOverride.instance.originalValues.get(block);
+	        float[] defaults = BlockOverride.instance.getOriginalValues(block);
 	        if (defaults != null) {
 	            block.setHardness(defaults[0]);
 	            block.setResistance(defaults[1]);
@@ -128,6 +144,45 @@ public class CommandBlockOverride extends CommandBase {
 	        BlockOverride.instance.removeBlockFromConfig(blockId);
 
 	        notifyCommandListener(sender, this, "§aRemoved override for block: " + blockId);
+	    } else if (args[0].equalsIgnoreCase("get")) {
+	        if (!(sender instanceof EntityPlayer)) {
+	            throw new CommandException("This command must be run by a player.");
+	        }
+
+	        EntityPlayer player = (EntityPlayer) sender;
+	        ItemStack held = player.getHeldItemMainhand();
+	        if (held == null || !(held.getItem() instanceof ItemBlock)) {
+	            String heldName = (held != null) ? held.getDisplayName() : "nothing";
+	            throw new CommandException("Item '" + heldName + "' is not a placeable block.");
+	        }
+
+	        Block block = ((ItemBlock) held.getItem()).getBlock();
+	        IBlockState state = block.getDefaultState();
+	        float hardness = block.getBlockHardness(state, null, BlockPos.ORIGIN);
+	        float resistance = block.getExplosionResistance(null);
+	        ResourceLocation id = Block.REGISTRY.getNameForObject(block);
+
+	        sender.sendMessage(new TextComponentString("§eBlock: §f" + id));
+	        sender.sendMessage(new TextComponentString("§eHardness: §f" + hardness));
+	        sender.sendMessage(new TextComponentString("§eResistance: §f" + resistance));
+	        
+	        if (BlockOverride.instance.isOverridden(id.toString())) {
+	            sender.sendMessage(new TextComponentString("§bThis block is currently overridden."));
+	        }
+	    } else if (args[0].equalsIgnoreCase("list")) {
+	        Map<String, float[]> overrides = BlockOverride.instance.getAllBlockOverrides();
+	        if (overrides.isEmpty()) {
+	            sender.sendMessage(new TextComponentString("§eNo blocks are currently overridden."));
+	        } else {
+	            sender.sendMessage(new TextComponentString("§6Overridden blocks (" + overrides.size() + "):"));
+	            for (Map.Entry<String, float[]> entry : overrides.entrySet()) {
+	                String blockId = entry.getKey();
+	                float[] values = entry.getValue();
+	                sender.sendMessage(new TextComponentString(
+	                    "§7- §e" + blockId + " §7→ hardness=" + values[0] + ", resistance=" + values[1]
+	                ));
+	            }
+	        }
 	    } else {
 	        throw new WrongUsageException("/blockoverride help");
 	    }
