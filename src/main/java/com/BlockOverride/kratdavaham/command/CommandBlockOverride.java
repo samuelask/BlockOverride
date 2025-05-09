@@ -22,6 +22,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 
 public class CommandBlockOverride extends CommandBase {
 	@Override
@@ -50,16 +51,16 @@ public class CommandBlockOverride extends CommandBase {
 	@Override
 	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 	    if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
-	        sender.sendMessage(new TextComponentString("§6Available BlockOverride commands:"));
-	        sender.sendMessage(new TextComponentString("§e/blockoverride reload §7- Reloads the block override config."));
-	        sender.sendMessage(new TextComponentString("§e/blockoverride add §7- Adds the block in your hand to the config."));
-	        sender.sendMessage(new TextComponentString("§e/blockoverride remove §7- Removes the block in your hand from the config."));
-	        sender.sendMessage(new TextComponentString("§e/blockoverride get §7- Gets the Hardness and Resistance value from the block in your hand."));
-	        sender.sendMessage(new TextComponentString("§e/blockoverride list §7- Lists all blocks that are currently overridden."));
-	        sender.sendMessage(new TextComponentString("§e/blockoverride help §7- Shows this help message."));
+	        sender.sendMessage(new TextComponentString(TextFormatting.GOLD + "Available BlockOverride commands:"));
+			sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "/blockoverride reload " + TextFormatting.GRAY + "- Reloads the block override config."));
+			sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "/blockoverride add " + TextFormatting.GRAY + "- Adds the block in your hand to the config."));
+			sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "/blockoverride remove " + TextFormatting.GRAY + "- Removes the block in your hand from the config."));
+			sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "/blockoverride get " + TextFormatting.GRAY + "- Gets the Hardness and Resistance value from the block in your hand."));
+			sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "/blockoverride list " + TextFormatting.GRAY + "- Lists all blocks that are currently overridden."));
+			sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "/blockoverride help " + TextFormatting.GRAY + "- Shows this help message."));
 	    } else if (args[0].equalsIgnoreCase("reload")) {
 	        BlockOverride.instance.reloadConfig();
-	        notifyCommandListener(sender, this, "§aBlockOverride config reloaded!");
+	        notifyCommandListener(sender, this, TextFormatting.GREEN + "BlockOverride config reloaded!");
 	    } else if (args[0].equalsIgnoreCase("add")) {
 	        if (!(sender instanceof EntityPlayer)) {
 	            throw new CommandException("This command must be run by a player.");
@@ -105,7 +106,7 @@ public class CommandBlockOverride extends CommandBase {
 	        // Update and apply
 	        BlockOverride.instance.addOrUpdateBlockInConfig(blockKey, hardness, resistance);
 	        BlockOverride.instance.modifyBlock(blockKey, hardness, resistance);
-	        notifyCommandListener(sender, this, "§aUpdated block '" + blockKey + "' → hardness=" + hardness + ", resistance=" + resistance);
+	        notifyCommandListener(sender, this, TextFormatting.GREEN + "Updated block '" + blockKey + "' -> hardness=" + hardness + ", resistance=" + resistance);
 	    } else if (args[0].equalsIgnoreCase("remove")) {
 	        if (!(sender instanceof EntityPlayer)) {
 	            throw new CommandException("This command must be run by a player.");
@@ -143,7 +144,7 @@ public class CommandBlockOverride extends CommandBase {
 	        // Remove from config
 	        BlockOverride.instance.removeBlockFromConfig(blockId);
 
-	        notifyCommandListener(sender, this, "§aRemoved override for block: " + blockId);
+	        notifyCommandListener(sender, this, TextFormatting.GREEN + "Removed override for block: " + blockId);
 	    } else if (args[0].equalsIgnoreCase("get")) {
 	        if (!(sender instanceof EntityPlayer)) {
 	            throw new CommandException("This command must be run by a player.");
@@ -162,24 +163,24 @@ public class CommandBlockOverride extends CommandBase {
 	        float resistance = block.getExplosionResistance(null);
 	        ResourceLocation id = Block.REGISTRY.getNameForObject(block);
 
-	        sender.sendMessage(new TextComponentString("§eBlock: §f" + id));
-	        sender.sendMessage(new TextComponentString("§eHardness: §f" + hardness));
-	        sender.sendMessage(new TextComponentString("§eResistance: §f" + resistance));
+	        sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "Block: " + TextFormatting.WHITE + id));
+	        sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "Hardness: " + TextFormatting.WHITE + hardness));
+	        sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "Resistance: " + TextFormatting.WHITE + resistance));
 	        
 	        if (BlockOverride.instance.isOverridden(id.toString())) {
-	            sender.sendMessage(new TextComponentString("§bThis block is currently overridden."));
+	            sender.sendMessage(new TextComponentString(TextFormatting.AQUA + "This block is currently overridden."));
 	        }
 	    } else if (args[0].equalsIgnoreCase("list")) {
 	        Map<String, float[]> overrides = BlockOverride.instance.getAllBlockOverrides();
 	        if (overrides.isEmpty()) {
-	            sender.sendMessage(new TextComponentString("§eNo blocks are currently overridden."));
+	            sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "No blocks are currently overridden."));
 	        } else {
-	            sender.sendMessage(new TextComponentString("§6Overridden blocks (" + overrides.size() + "):"));
+	            sender.sendMessage(new TextComponentString(TextFormatting.GOLD + "Overridden blocks (" + overrides.size() + "):"));
 	            for (Map.Entry<String, float[]> entry : overrides.entrySet()) {
 	                String blockId = entry.getKey();
 	                float[] values = entry.getValue();
 	                sender.sendMessage(new TextComponentString(
-	                    "§7- §e" + blockId + " §7→ hardness=" + values[0] + ", resistance=" + values[1]
+	                    TextFormatting.GRAY + "- " + TextFormatting.YELLOW + blockId + TextFormatting.GRAY + " -> hardness=" + values[0] + ", resistance=" + values[1]
 	                ));
 	            }
 	        }

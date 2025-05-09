@@ -156,17 +156,11 @@ public class BlockOverride
 	    config.load();
 
 	    if (config.hasCategory("blocks")) {
-	        logger.info("Migrating config category 'blocks' → 'settings'...");
+	        logger.info("Migrating config category 'blocks' -> 'settings'...");
 
 	        String[] oldBlockSettings = config.get("blocks", "blockSettings", new String[0]).getStringList();
 
-	        config.get("settings", "blockSettings", oldBlockSettings,
-	            "List of blocks to override.\n" +
-	            "Format: modid:blockname=hardness,resistance\n" +
-	            "Example: minecraft:obsidian=5.0,1200.0\n" +
-	            "Note: Bedrock has a hardness of -1.0 by default, and resistance of 3600000.0\n" +
-	            "Setting hardness to -1.0 may make blocks unbreakable (like bedrock)."
-	        ).set(oldBlockSettings);
+	        config.get("settings", "blockSettings", oldBlockSettings).set(oldBlockSettings);
 
 	        config.removeCategory(config.getCategory("blocks"));
 	        logger.info("Migration complete. Removed legacy category 'blocks'.");
@@ -180,18 +174,21 @@ public class BlockOverride
 	    
 	    if (!configVersion.equals(currentVersion)) {
 	        logger.warn("Config version mismatch! Found: " + configVersion + ", expected: " + currentVersion);
+	        
+	        config.get("info", "instructions", new String[] {
+	            "List of blocks to override.",
+	            "Format: modid:blockname=hardness,resistance",
+	            "Example: minecraft:obsidian=5.0,1200.0",
+	            "Note: Bedrock has a hardness of -1.0 by default, and resistance of 3600000.0",
+	            "Setting hardness to -1.0 may make blocks unbreakable (like bedrock)."
+	        }).setComment("Informational only. No need to modify.");
+
 	        Property versionProp = config.get("general", "configVersion", currentVersion);
 	        versionProp.set(currentVersion);
 	        versionProp.setComment("DO NOT EDIT. Used to track config version.");
 	    }
 	    
-	    String[] entries = config.get("settings", "blockSettings", new String[0],
-	    	    "List of blocks to override.\n" +
-	    	    "Format: modid:blockname=hardness,resistance\n" +
-	    	    "Example: minecraft:obsidian=5.0,1200.0\n" +
-	    	    "Note: Bedrock has a hardness of -1.0 by default, and resistance of 3600000.0\n" +
-	    	    "Setting hardness to -1.0 may make blocks unbreakable (like bedrock)."
-	    	).getStringList();
+	    String[] entries = config.get("settings", "blockSettings", new String[0]).getStringList();
 
 	    for (String entry : entries) {
 	        try {
